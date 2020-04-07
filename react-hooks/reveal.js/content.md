@@ -16,7 +16,7 @@ const [counter, setCounter] = React.useState(0);
 
 ---
 
-- ([value, setter] = useState(initialValue)) \* ∞ but follow the rules!
+- Use the useState() hook as many times as you want but follow the rules!
 - But what about interdependent states or more complex state logic?
 
 ---
