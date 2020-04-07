@@ -95,7 +95,7 @@ const Context = React.createContext(defaultValue);
 
 - All consumers that are descendents of a Provider will re-render whenever the `value` prop changes
   - Danger of unnecessary re-renders
-  - Use context for global data that's needed in many components but less liable to change (e.g. locale, auth, preferred language, dark theme)
+  - Use context for data needed in many components but less liable to change (e.g. locale, auth, preferred language, dark theme)
 
 ---
 
