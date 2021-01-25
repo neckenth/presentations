@@ -1,0 +1,19 @@
+{
+  "name": "dev-tea-sinon",
+  "version": "1.0.0",
+  "description": "",
+  "main": "reveal.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.21.1",
+    "chai": "^4.2.0",
+    "lodash": "^4.17.20",
+    "mocha": "^8.2.1",
+    "open": "^7.3.1",
+    "sinon": "^9.2.4"
+  }
+}
