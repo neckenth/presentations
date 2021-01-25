@@ -108,5 +108,6 @@ stub -
 * code paths for doSomething - (if they provide an id, then the callback should be x, if they don't, then the callback should be y, for eg)
 * for getCatTemperament, stub out the actual axios request
 spy - doSomething for args and to assert that the callbacks and stuff are also fired
+spy - getCatTemperament (easily see the return values)
 duplicate this with mocks?
 */
