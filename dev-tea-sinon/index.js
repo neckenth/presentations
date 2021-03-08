@@ -1,14 +1,7 @@
 const axios = require("axios");
 const open = require("open");
 const _ = require("lodash");
-const { breedIds } = require("./const");
-
-const API_KEY = "4fe4e11a-c8d6-49a6-a99d-465cb210e560";
-const URL = "https://api.thecatapi.com/v1/";
-
-const headers = {
-  "X-API-Key": API_KEY,
-};
+const { breedIds, URL, headers } = require("./const");
 
 const funcs = {
   getBreedId: () => breedIds[Math.floor(Math.random() * breedIds.length)],
@@ -19,7 +12,8 @@ const funcs = {
       headers,
     };
     let filepath = "";
-    return axios(request)
+    return axios
+      .get(request)
       .then((res) => {
         if (Array.isArray(res.data) && res.data.length) {
           filepath = res.data[0].url;
@@ -29,11 +23,11 @@ const funcs = {
             }
           });
         } else {
-          return "No cat pics match your provided breed name.";
+          throw new Error("No cat pics match your provided breed name.");
         }
       })
       .catch((e) => {
-        console.log(e);
+        throw new Error(e);
       });
   },
   getCatTemperament: (breed) => {

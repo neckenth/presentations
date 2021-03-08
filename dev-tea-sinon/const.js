@@ -146,7 +146,17 @@ const breedIds = [
   "ycho",
 ];
 
+const API_KEY = "4fe4e11a-c8d6-49a6-a99d-465cb210e560";
+const URL = "https://api.thecatapi.com/v1/";
+
+const headers = {
+  "X-API-Key": API_KEY,
+};
+
 module.exports = {
   breeds,
   breedIds,
+  API_KEY,
+  URL,
+  headers,
 };
