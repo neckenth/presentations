@@ -3,7 +3,6 @@ const sinon = require("sinon");
 const funcs = require("../index");
 const { breedIds } = require("../const");
 const axios = require("axios");
-const { request } = require("http");
 
 describe("STUBS", () => {
   let getBreedIdStub;
@@ -32,8 +31,8 @@ describe("STUBS", () => {
 
     // something more like what you'll see in Neolith - stubbing network responses
     // stub out the request library itself!
-    getStub = sinon.stub(axios, "get").callsFake(() => {
-      if (request.url.includes("rando")) {
+    getStub = sinon.stub(axios, "get").callsFake((req) => {
+      if (req.includes("rando")) {
         throw new Error("No cat pics match your provided breed name.");
       }
       return Promise.resolve({
@@ -64,7 +63,8 @@ describe("STUBS", () => {
     // notice how even though we're forcing getBreedId() to return "beng", the "munc" temperament is returned
     const temperament = await funcs.doSomething(
       undefined,
-      funcs.getCatTemperament
+      funcs.getCatTemperament,
+      funcs.getCatPic
     );
     expect(temperament).to.equal(
       "Munchkin cats are Agile, Easy Going, Intelligent, Playful!"
