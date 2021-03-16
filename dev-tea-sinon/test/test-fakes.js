@@ -2,7 +2,7 @@ const sinon = require("sinon");
 const funcs = require("../index");
 const axios = require("axios");
 
-describe.only("FAKES", () => {
+describe("FAKES", () => {
   let getBreedIdStub;
   let getStub;
   let fake;
