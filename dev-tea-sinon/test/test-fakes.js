@@ -1,11 +1,8 @@
-const { expect } = require("chai");
 const sinon = require("sinon");
 const funcs = require("../index");
-const { breedIds } = require("../const");
 const axios = require("axios");
-const { mock } = require("sinon");
 
-describe("FAKES", () => {
+describe.only("FAKES", () => {
   let getBreedIdStub;
   let getStub;
   let fake;

@@ -1,9 +1,6 @@
-const { expect } = require("chai");
 const sinon = require("sinon");
 const funcs = require("../index");
-const { breedIds } = require("../const");
 const axios = require("axios");
-const { mock } = require("sinon");
 
 describe("MOCKS", () => {
   let getBreedIdStub;

@@ -3,9 +3,8 @@ const sinon = require("sinon");
 const funcs = require("../index");
 const { breedIds } = require("../const");
 const axios = require("axios");
-const open = require("open");
 
-describe("STUBS", () => {
+describe.only("STUBS", () => {
   let getBreedIdStub;
   let getCatTemperamentStub;
   let getCatPicStub;
@@ -63,8 +62,11 @@ describe("STUBS", () => {
   });
 
   it("getBreedId synchronously returns a `random` breedId per the stub", () => {
-    const breedId = funcs.getBreedId();
-    expect(breedId).to.equal("beng");
+    const breedId1 = funcs.getBreedId();
+    expect(breedId1).to.equal("beng");    
+
+    const breedId2 = funcs.getBreedId();
+    expect(breedId2).to.equal("beng");
   });
 
   it("doSomething returns a Promise - resolves to the Munchkin temperament per the stub", async () => {
@@ -82,15 +84,17 @@ describe("STUBS", () => {
   it("getCatPic properly throws an error if the provided breedId isn't included in API", async () => {
     // just testing an error is not thrown here
     const anotherBreedId = "chee";
-    funcs.getCatPic(anotherBreedId);
+    expect(funcs.getCatPic(anotherBreedId)).not.to.throw;
 
     try {
-      await funcs.getCatPic("westie");
+      expect(await funcs.getCatPic("westie")).to.throw
+      // await funcs.getCatPic("westie");
     } catch (e) {
       // testing the assertion is thrown properly
       expect(e.message).to.equal("No cat pics match your provided breed name.");
     }
 
+    // now the axios stub
     try {
       // testing code path specified in stub
       await funcs.getCatTemperament("rando");
@@ -101,7 +105,7 @@ describe("STUBS", () => {
     // remove the wrapping getCatTemperamentStub to test the axios stub
     getCatTemperamentStub.restore();
 
-    const cheetohTemperament = await funcs.getCatTemperament("chee");
+    const cheetohTemperament = await funcs.getCatTemperament("munc");
     expect(cheetohTemperament).to.equal(
       "Cheetoh cats are Affectionate, Gentle, Intelligent, Social!"
     );
