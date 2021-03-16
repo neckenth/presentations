@@ -34,11 +34,17 @@ describe("MOCKS", () => {
     });
 
     mock = sinon.mock(funcs);
+
+    // this is a fake to prevent images from opening in the browser during each test
+    // will explain later
+    const fake = sinon.fake.returns("coolio");
+    sinon.replace(funcs, "specialOpen", fake);
   });
 
   afterEach(() => {
     getBreedIdStub.restore();
     getStub.restore();
+    sinon.restore();
   });
 
   it("meow is called once each time we try to get a cat pic", () => {

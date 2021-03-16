@@ -4,6 +4,11 @@ const _ = require("lodash");
 const { breedIds, URL, headers } = require("./const");
 
 const funcs = {
+  specialOpen: (target) => {
+    open(target, (err) => {
+      console.log(err);
+    });
+  },
   meow: () => console.log("MEOW"),
   getBreedId: () => breedIds[Math.floor(Math.random() * breedIds.length)],
 
@@ -15,11 +20,7 @@ const funcs = {
       .then((res) => {
         if (Array.isArray(res.data) && res.data.length) {
           filepath = res.data[0].url;
-          return open(filepath, (err) => {
-            if (err) {
-              console.log("err");
-            }
-          });
+          return funcs.specialOpen(filepath);
         } else {
           throw new Error("No cat pics match your provided breed name.");
         }

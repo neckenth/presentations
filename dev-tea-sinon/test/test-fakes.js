@@ -47,6 +47,7 @@ describe("FAKES", () => {
   it("can be used w/ sinon.replace() to replace functionality", () => {
     sinon.replace(funcs, "setTimeoutPromise", fake);
 
+    // asking to get the pic in 1 second, but due to the fake, we have to wait 5
     funcs.eventuallyGetCatPic("drex", 1000);
   });
 });

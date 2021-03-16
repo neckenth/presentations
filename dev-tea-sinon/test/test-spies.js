@@ -1,12 +1,6 @@
 const sinon = require("sinon");
-const mock = require("mock-require");
 const funcs = require("../index");
-const { breedIds } = require("../const");
 const axios = require("axios");
-const { request } = require("http");
-// const { open } = require("open");
-const proxyquire = require("proxyquire");
-const { getCatPic } = require("../index");
 
 describe("SPIES", () => {
   let getBreedIdStub;
@@ -15,11 +9,7 @@ describe("SPIES", () => {
   let getCatPicSpy;
 
   beforeEach(() => {
-    // stub a synchronous func to force return value (e.g. generateAuthCode in Neolith auth flow)
     getBreedIdStub = sinon.stub(funcs, "getBreedId").returns("beng");
-    getCatPicSpy = sinon.spy(funcs, "getCatPic");
-    getCatTemperamentSpy = sinon.spy(funcs, "getCatTemperament");
-
     getStub = sinon.stub(axios, "get").callsFake((req) => {
       if (req.includes("rando")) {
         throw new Error("No cat pics match your provided breed name.");
@@ -39,6 +29,13 @@ describe("SPIES", () => {
         ],
       });
     });
+    getCatPicSpy = sinon.spy(funcs, "getCatPic");
+    getCatTemperamentSpy = sinon.spy(funcs, "getCatTemperament");
+
+    // this is a fake to prevent images from opening in the browser during each test
+    // will explain later
+    const fake = sinon.fake.returns("coolio");
+    sinon.replace(funcs, "specialOpen", fake);
   });
 
   afterEach(() => {
@@ -46,14 +43,18 @@ describe("SPIES", () => {
     getStub.restore();
     getCatPicSpy.restore();
     getCatTemperamentSpy.restore();
+    sinon.restore();
   });
 
   it("anonymous function spies", () => {
+    // given specific arguments, one callback will be called while the other will not
+    // test the code follows the correct path
     const callback1 = sinon.spy();
     const callback2 = sinon.spy();
 
     funcs.doSomething("chee", callback1, callback2);
 
+    // this time using Sinon's assertions
     sinon.assert.notCalled(callback1);
     sinon.assert.calledOnceWithExactly(callback2, "chee");
 
@@ -66,33 +67,16 @@ describe("SPIES", () => {
     sinon.assert.notCalled(callback4);
   });
 
-  it("wrapping all/specific object methods", () => {
+  it("wrapping all/specific object methods - 1", () => {
     funcs.doSomething(undefined, funcs.getCatPic, funcs.getCatTemperament);
 
     sinon.assert.notCalled(funcs.getCatTemperament);
     sinon.assert.calledOnceWithExactly(funcs.getCatPic, "beng");
   });
-  it("wrapping all/specific object methods", () => {
+  it("wrapping all/specific object methods - 2", () => {
     funcs.doSomething("chee", funcs.getCatPic, funcs.getCatTemperament);
 
     sinon.assert.notCalled(funcs.getCatPic);
     sinon.assert.calledOnceWithExactly(funcs.getCatTemperament, "chee");
   });
-
-  // it("testing something", () => {
-  //   delete require.cache[require.resolve("open")];
-  //   // Second we need rewrite the cached sum module to be as follows:
-  //   require.cache[require.resolve("open")] = {
-  //     exports: sinon.stub(),
-  //   };
-  //   // Third we need to require the doStuff module again
-  //   require("open");
-  //   const openStub = sinon.stub(open, "index.open");
-  //   funcs.getCatPic("munc");
-
-  //   // console.log("OPEN SPY", openSpy.getCalls());
-  //   openStub.restore();
-  // });
-
-  // TO ADD - STUBBING OUT REQUIRED MODULES - DON'T WANT TO ACTUALLY CALL OPEN
 });

@@ -37,14 +37,10 @@ Documentation: https://sinonjs.org/
 ---
 
 - Two types of spies
-  - Anonymous function spies -
+  - Anonymous function spies
     - `sinon.spy()`
-      - Use when not testing the behavior of the spied-on function.
-      - Created spy records information about all calls.
     - E.g. test how a method handles a callback.
   - Spies that wrap any/all object methods.
-    - Creates a spy for the specified method/object and replaces all method calls without changing any of its behavior.
-    - NOTE: since spies don't change function behavior, you may need a combination of spies _and_ stubs to prevent network/db calls.
 
 ---
 
@@ -60,7 +56,6 @@ Documentation: https://sinonjs.org/
 
 #### Also - Fakes
 
-- A fake is a Function that records args, return value, `this context`, and exception thrown (if any) for all of its calls
-- Immutable - once it's created, its behavior cannot be changed
+- A fake is an immutable Function that records args, return value, `this` context, and exception thrown (if any) for all of its calls
 - Not used to replace behavior under test
   - Fake function w/ fake behavior you can then use to replace object methods in your test cases: `sinon.replace()`

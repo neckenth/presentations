@@ -3,6 +3,7 @@ const sinon = require("sinon");
 const funcs = require("../index");
 const { breedIds } = require("../const");
 const axios = require("axios");
+const open = require("open");
 
 describe("STUBS", () => {
   let getBreedIdStub;
@@ -21,7 +22,8 @@ describe("STUBS", () => {
       .resolves("Munchkin cats are Agile, Easy Going, Intelligent, Playful!");
 
     // stub out different behaviors for different code paths (i.e. testing error handling)
-    // can do this with callsFake (among other methods) - forces a fake function to be invoked when the stubbed func is called
+    // a technique for this you'll see in Neolith a lot is `callsFake` (among other methods)
+    // forces a fake function to be invoked when the stubbed func is called
     getCatPicStub = sinon.stub(funcs, "getCatPic").callsFake((id) => {
       if (!breedIds.includes(id)) {
         throw new Error("No cat pics match your provided breed name.");
@@ -45,6 +47,11 @@ describe("STUBS", () => {
         ],
       });
     });
+
+    // this is a fake to prevent images from opening in the browser during each test
+    // will explain later
+    const fake = sinon.fake.returns("coolio");
+    sinon.replace(funcs, "specialOpen", fake);
   });
 
   afterEach(() => {
@@ -52,6 +59,7 @@ describe("STUBS", () => {
     getCatTemperamentStub.restore();
     getCatPicStub.restore();
     getStub.restore();
+    sinon.restore();
   });
 
   it("getBreedId synchronously returns a `random` breedId per the stub", () => {
@@ -84,6 +92,7 @@ describe("STUBS", () => {
     }
 
     try {
+      // testing code path specified in stub
       await funcs.getCatTemperament("rando");
     } catch (e) {
       expect(e.message).to.equal("No cat pics match your provided breed name.");
@@ -98,5 +107,3 @@ describe("STUBS", () => {
     );
   });
 });
-
-// do spies next! (doSomething is a good one for this)
