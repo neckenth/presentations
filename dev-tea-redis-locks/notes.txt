@@ -1,0 +1,70 @@
+* Distributed Locking
+- A singular, shared, synchronously-accessible resource to be used as locking mechanism between multiple threads/processes/machines.
+- Prevent data corruption or race conditions between processes sharing the same source data.
+- In our case, the processes sharing the locks are Celery tasks/workers.
+  - We wanted to prevent multiple tasks responsible for re-evaluating audiences and refreshing the Redis cache from running at the same time.
+  - We use Redis to store these ephemeral locks and act as the source of truth for processes in-progress.
+
+* Core Principles
+- Mutual exclusion: at any time, only one client can hold a lock w/ a given key.
+- No deadlocks: eventually, it should always be possible to acquire a lock, even if the client crashes.
+    - Setting TTL on locks
+
+
+* Mental Model
+- Going skating at an ice rink, where everyone must put their stuff in a locker while they skate, and they can only skate for 30 minutes at a time. Skaters waiting for lockers can only wait for 5 minutes.
+- Each skater represents a process or an instance of your application or a cron worker.
+- Walk up, and put your stuff in locker 1, close it, and take the key. This is the equivalent of "acquiring" the lock. Locker 1 can't be used by anyone else during your 30 minutes. 30 minutes is the lock's "time-to-live". The 30 minutes of skating is the "work" the process is doing while the lock is owned by you.
+- Other skaters who want locker 1 will wait for 5 minutes to see if you come back to free up the locker. 5 minutes is the lock's `blocking_timeout` in the case of redis-py. After 5 minutes, their moms will say they have to go home and can't skate, so they won't even begin their process of 30 minutes of skating. If you come back within their 5 minutes of wait time and put the key back in the locker, then they'll be able to acquire the lock (use the locker and take the key) and start their process (go skating).
+- When you're done skating, you come back to the locker, take your stuff out, and leave the key inside. This is the act of "releasing" the lock. Now another skater can use locker 1.
+- If you're ill-behaved, and you want to skate for longer than 30 minutes, the guy renting out the skates will make a new key and put it in locker 1. This is the act of the lock "timing out". Now locker 1 can be used again by other skaters, even though you're still skating.
+- You do have the option of holding onto your key for longer than your TTL by asking the guy politely if you can keep going. If he says "yes", that's the equivalent of "extending" the lock.
+- You're also a ding dong of a kid who forgot you already took your key (and give it to your mom for safe-keeping or something), so if at any point during your skate, you go back to your locker and try to take the key out again, you won't be able to until the guy unlocks it for you with a new key at your timeout time.
+
+* Lock Tokens 1
+- When a lock is acquired, if one is not provided, a UUID is assigned as its token (lock.local.token)
+- In the release action, the client will expect its lock token to match the token provided upon acquisition. If it does not match, a LockError will be thrown.
+- This is to prevent race conditions betwn clients:
+  - Client 1 acquires a lock and times out during processing
+  - Before Client 1 has released the lock, Client 2 acquires it and begins processing.
+  - Client 1 releases the lock, which releases it from Client 2.
+  - Now, the lock is available to other clients while Client 2 is working.
+
+* Lock Tokens 2 - our case
+- In our case, the lock is being acquired in 1 function and released in another
+    - Surprisingly acts as 2 different processes even if the functions are being invoked during the same celery task.
+- In order to circumvent this issue, we assign static lock tokens that all functions/processes/workers can use for each lock. (an expectable key name and token for each lock)
+- This does open us up to the vulnerability explained in the last slide, but we do our best to avoid this:
+  - Carefully planning the lock TTL and `blocking_timeouts` for lock acquisition.
+  - Make locks persist for as little time as possible.
+
+* Our Implementation: Attempt # 1
+- Essentially passing locks with long TTLs back and forth between the every-5-minute task and the midnight full refresh.
+- Share locks between every-5-minute task based on contact changes and midnight full refresh task (both of these run institution-by-institution)
+  - Note that the midnight task eventually kicks off a new Celery task per filter per institution.
+- For each institution, acquire a lock, and let it live for about as long as a Celery task can run (hard-timeout = 12 minutes)
+- At the start of the midnight refresh task, add an entry to Redis indicating to any running every-5-minute tasks that it should stop.
+- Acquire the lock, and continually extend it by 12 minutes for every filter (give the lock as much time as it could possibly take for the full task to finish for institution).
+- When we're done evaluating all filters for institution, release the lock, and kick off the process for the next institution.
+- Similar behavior on the partial-refresh side.
+- We were seeing tons of errors where we were attempting to release a lock that was not owned, or we were unable to acquire a lock in time.
+- Debugging was super challenging...
+
+* Our Implementation: Attempt # 2 (current)
+- Each time a filter needs to be re-evaluated in order to refresh the Redis cache...
+
+  - Attempt to acquire a lock for that filter
+  - If unable to acquire, stop.
+  - If able to acquire, re-evaluate.
+  - (Immediately prior to updating the cache, make sure the lock is still owned. (just for safety - only fails in a test environment))
+  - Update the cache, and release the lock.
+
+* Our Implementation: Attempt # 2 Cont'd
+
+- However we're refreshing the cache for the filter (based on contact changes or full audience refresh), let the current re-eval/update finish before trying again.
+
+- Benefits:
+  - Lock needs to live for a much shorter duration
+      - Less collisions if multiple evaluations are being kicked off in short time spans.
+  - Same behavior for both recurring and ad-hoc refreshes.
+      - Much cleaner and easier to debug.
